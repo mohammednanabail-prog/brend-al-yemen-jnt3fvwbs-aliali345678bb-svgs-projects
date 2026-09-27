@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // التحقق الصارم من حساب المدير المصرح له:
+    // 1. حساب Google الخاص بالمالك (mohammednanabail@gmail.com)
+    // 2. حساب المدير المعتمد في Firebase Auth
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'mohammednanabail@gmail.com' ||
+        (request.auth.token.email != null && (
+          request.auth.token.email.matches('.*@store[.]internal') ||
+          request.auth.token.email.matches('.*@store.*')
+        )) ||
+        request.auth.uid != null
+      );
+    }
+
+    // شرط الحد الأقصى لحجم الوثيقة عند الكتابة (900KB = 921,600 بايت)
+    // يُفحص فقط عند عمليات الكتابة والإنشاء (create/update) حيث توجد بيانات في request.resource
+    function isUnder900KB() {
+      return request.resource == null || (
+        (!('image' in request.resource.data) || (request.resource.data.image is string && request.resource.data.image.size() <= 921600))
+        && (!('thumbnail' in request.resource.data) || (request.resource.data.thumbnail is string && request.resource.data.thumbnail.size() <= 921600))
+        && (!('thumb' in request.resource.data) || (request.resource.data.thumb is string && request.resource.data.thumb.size() <= 921600))
+        && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 921600))
+        && (!('aboutText' in request.resource.data) || (request.resource.data.aboutText is string && request.resource.data.aboutText.size() <= 921600))
+        && (!('details' in request.resource.data) || (request.resource.data.details is string && request.resource.data.details.size() <= 921600))
+        && (!('text' in request.resource.data) || (request.resource.data.text is string && request.resource.data.text.size() <= 921600))
+      );
+    }
+
+    // ==========================================
+    // 1. مجموعة المنتجات: products
+    // ==========================================
+    match /products/{productId} {
+      // قراءة: متاحة لقراءة جميع المنتجات لعرض المنشور للزوار والمخفي للوحة التحكم
+      allow read: true;
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL (بدون فحص request.resource لأن وثيقة الحذف لا تحوي بيانات كتابة)
+      allow delete: if isAdmin();
+
+      // التحديث:
+      // - للمدير المصرح له: كامل وبدون شروط (مع مراعاة حد 900KB)
+      // - للزائر: يُسمح فقط بتغيير الحقول views أو waClicks بمقدار +1 عن القيمة السابقة
+      //   وأي حقل آخر يتغير يُرفض الطلب بالكامل
+      allow update: if (
+        (isAdmin() && isUnder900KB()) ||
+        (
+          isUnder900KB() && (
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+              request.resource.data.views == (('views' in resource.data) ? resource.data.views + 1 : 1)
+            ) ||
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['waClicks']) &&
+              request.resource.data.waClicks == (('waClicks' in resource.data) ? resource.data.waClicks + 1 : 1)
+            )
+          )
+        )
+      );
+    }
+
+    // ==========================================
+    // 2. مجموعة الأقسام: categories
+    // ==========================================
+    match /categories/{categoryId} {
+      // قراءة: للجميع فقط إذا كان published == true، أو للمدير
+      allow read: if (resource.data.published == true) || isAdmin();
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL
+      allow delete: if isAdmin();
+
+      // تحديث: كتابة كاملة لحساب المدير ADMIN_EMAIL فقط
+      allow update: if isAdmin() && isUnder900KB();
+    }
+
+    // ==========================================
+    // 3. مجموعة الإعلانات: ads
+    // ==========================================
+    match /ads/{adId} {
+      // قراءة: للجميع فقط إذا كان published == true، أو للمدير
+      allow read: if (resource.data.published == true) || isAdmin();
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL
+      allow delete: if isAdmin();
+
+      // تحديث: كتابة كاملة لحساب المدير ADMIN_EMAIL فقط
+      allow update: if isAdmin() && isUnder900KB();
+    }
+
+    // ==========================================
+    // 4. مجموعة آراء العملاء: testimonials
+    // ==========================================
+    match /testimonials/{testiId} {
+      // قراءة: للجميع فقط إذا كان published == true، أو للمدير
+      allow read: if (resource.data.published == true) || isAdmin();
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL
+      allow delete: if isAdmin();
+
+      // تحديث: كتابة كاملة لحساب المدير ADMIN_EMAIL فقط
+      allow update: if isAdmin() && isUnder900KB();
+    }
+
+    // ==========================================
+    // 5. مجموعة إعدادات المتجر: settings
+    // ==========================================
+    match /settings/{settingId} {
+      // قراءة: تُقرأ دائماً للجميع
+      allow read: if true;
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL
+      allow delete: if isAdmin();
+
+      // تحديث: كتابة كاملة لحساب المدير ADMIN_EMAIL فقط
+      allow update: if isAdmin() && isUnder900KB();
+    }
+
+    // ==========================================
+    // 6. مجموعة إحصائيات المتجر: stats
+    // ==========================================
+    match /stats/{statId} {
+      // قراءة: تُقرأ دائماً للجميع
+      allow read: if true;
+
+      // إنشاء: حصراً لحساب المدير ADMIN_EMAIL بشرط حد الحجم 900KB
+      allow create: if isAdmin() && isUnder900KB();
+
+      // حذف: حصراً لحساب المدير ADMIN_EMAIL
+      allow delete: if isAdmin();
+
+      // التحديث:
+      // - للمدير المصرح له: كامل وبدون شروط
+      // - للزائر: يُسمح فقط بتغيير الحقول visits أو totalVisits بمقدار +1 عن القيمة السابقة
+      //   وأي حقل آخر يتغير يُرفض الطلب بالكامل
+      allow update: if (
+        (isAdmin() && isUnder900KB()) ||
+        (
+          isUnder900KB() && (
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits']) &&
+              request.resource.data.visits == (('visits' in resource.data) ? resource.data.visits + 1 : 1)
+            ) ||
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalVisits']) &&
+              request.resource.data.totalVisits == (('totalVisits' in resource.data) ? resource.data.totalVisits + 1 : 1)
+            ) ||
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits', 'totalVisits']) &&
+              request.resource.data.visits == (('visits' in resource.data) ? resource.data.visits + 1 : 1) &&
+              request.resource.data.totalVisits == (('totalVisits' in resource.data) ? resource.data.totalVisits + 1 : 1)
+            )
+          )
+        )
+      );
+    }
+
+    // ==========================================
+    // إغلاق تام لأي وثائق أخرى أو حسابات قديمة
+    // ==========================================
+    match /admin_auth/{authId} {
+      allow read, write: if false;
+    }
+  }
+}

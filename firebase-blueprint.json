@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "products": {
+      "title": "المنتجات",
+      "description": "قائمة منتجات وتفاصيل الملابس والتفصيل",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "oldPrice": { "type": "number" },
+        "categoryId": { "type": "string" },
+        "description": { "type": "string" },
+        "color": { "type": "string" },
+        "colorHex": { "type": "string" },
+        "fabric": { "type": "string" },
+        "sizes": { "type": "array" },
+        "details": { "type": "string" },
+        "images": { "type": "array" },
+        "published": { "type": "boolean" },
+        "stock": { "type": "boolean" },
+        "featured": { "type": "boolean" },
+        "badge": { "type": "string" },
+        "views": { "type": "number" },
+        "waClicks": { "type": "number" },
+        "thumbnail": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "price", "categoryId", "published"]
+    },
+    "categories": {
+      "title": "الأقسام",
+      "description": "أقسام وتصنيفات المنتجات",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "ads": {
+      "title": "الإعلانات",
+      "description": "أشرطة الإعلانات والعروض في أعلى الموقع",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "icon": { "type": "string" },
+        "kind": { "type": "string" },
+        "linkType": { "type": "string" },
+        "linkValue": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["text"]
+    },
+    "testimonials": {
+      "title": "آراء العملاء",
+      "description": "تقييمات وآراء العملاء المعروضة في المتجر",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "stars": { "type": "number" },
+        "text": { "type": "string" }
+      },
+      "required": ["name", "text"]
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "description": "إعدادات وهوية المتجر ومعلومات التواصل",
+      "properties": {
+        "shopName": { "type": "string" },
+        "shopNameEn": { "type": "string" },
+        "shopSub": { "type": "string" },
+        "tagline": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "currency": { "type": "string" },
+        "waTemplate": { "type": "string" },
+        "waGeneral": { "type": "string" },
+        "showFloatWa": { "type": "boolean" },
+        "hoursOpen": { "type": "string" },
+        "hoursClose": { "type": "string" },
+        "address": { "type": "string" },
+        "mapUrl": { "type": "string" },
+        "socFb": { "type": "string" },
+        "socIg": { "type": "string" },
+        "socTt": { "type": "string" },
+        "socTw": { "type": "string" },
+        "aboutText": { "type": "string" },
+        "homeShow": { "type": "object" }
+      }
+    },
+    "stats": {
+      "title": "إحصائيات المتجر",
+      "description": "إحصائيات حقيقية لزيارات الموقع الإجمالية واليومية",
+      "properties": {
+        "totalVisits": { "type": "number" },
+        "todayVisits": { "type": "number" },
+        "todayDate": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "admin_auth": {
+      "title": "بيانات دخول المدير",
+      "description": "اسم المستخدم وكلمة المرور المشفرة للمدير للتحكم بالمتجر",
+      "properties": {
+        "username": { "type": "string" },
+        "passwordHash": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "براند اليمن للخياطة والتفصيل",
+  "description": "موقع ومتجر براند اليمن للخياطة والتفصيل مع لوحة تحكم كاملة وربط مع Firebase Firestore وواتساب",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
